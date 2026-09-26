@@ -1,9 +1,18 @@
 # Render Blueprint — deploy all three pieces (Postgres, backend, frontend) together.
 #
 # Usage: push this repo to GitHub, then in Render: New → Blueprint → pick the repo.
-# Render reads this file and provisions everything below in one go, already wired together
-# (the backend gets the Postgres connection info automatically; the frontend gets the
-# backend's URL automatically).
+#
+# Note on the two envVars below (CORS_ALLOWED_ORIGINS, VITE_API_BASE_URL): Render assigns
+# each service's *.onrender.com URL only once it's created, so these are hardcoded guesses
+# based on the service names below (Render uses the service name as the subdomain when it's
+# available). If either name was already taken in your Render account, Render will have
+# appended a random suffix to that service's actual URL — check the dashboard after the
+# first deploy and update these two values (then redeploy) if they don't match.
+#
+# fromService/fromDatabase linking is intentionally NOT used for these two — `fromService`'s
+# `host` property returns Render's *private-network* hostname, which a browser (the frontend's
+# JS, running on a visitor's machine) cannot reach at all. The public https:// URL has to be
+# a real value, not a private-network reference.
 
 databases:
   - name: resumeintel-db
@@ -19,6 +28,7 @@ services:
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
     plan: free
+    healthCheckPath: /api/health
     envVars:
       - key: PGHOST
         fromDatabase: { name: resumeintel-db, property: host }
@@ -30,14 +40,12 @@ services:
         fromDatabase: { name: resumeintel-db, property: user }
       - key: PGPASSWORD
         fromDatabase: { name: resumeintel-db, property: password }
-      # Set this to your deployed frontend's actual URL after the first deploy (Render
-      # assigns the *.onrender.com URL on creation, so this is a manual edit once, or set it
-      # in the Render dashboard instead of here).
       - key: CORS_ALLOWED_ORIGINS
         value: https://resumeintel-frontend.onrender.com
-    healthCheckPath: /api/health
 
   # ---- Frontend: Vite/React static site ----
+  # No `plan` field here — Render rejects the entire Blueprint sync if a static site has one,
+  # since static sites aren't billed as compute (see comment block above the databases: key).
   - type: web
     name: resumeintel-frontend
     runtime: static
@@ -45,7 +53,7 @@ services:
     staticPublishPath: ./frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        fromService: { name: resumeintel-backend, type: web, property: host }
+        value: https://resumeintel-backend.onrender.com
     routes:
       - type: rewrite
         source: /*

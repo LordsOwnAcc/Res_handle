@@ -42,16 +42,16 @@ Opens on `http://localhost:5173` and talks to the backend via `VITE_API_BASE_URL
 2. In Render: **New → Blueprint**, point it at the repo. Render reads `render.yaml` and
    provisions three things: `resumeintel-db` (Postgres), `resumeintel-backend` (Docker web
    service), `resumeintel-frontend` (static site).
-3. **Important manual step:** Render's automatic env-var linking between a static site and a
-   web service (`fromService`) doesn't reliably resolve to a full `https://` URL in practice.
-   After the first deploy:
-   - Copy the backend's actual URL (Render dashboard → `resumeintel-backend` → shows
-     `https://resumeintel-backend-xxxx.onrender.com`).
-   - Set that as `VITE_API_BASE_URL` on the **frontend** service's environment variables, then
-     trigger a redeploy (Vite bakes env vars in at build time, so this needs a rebuild, not
-     just a restart).
-   - Copy the frontend's actual URL the same way, and set it as `CORS_ALLOWED_ORIGINS` on the
-     **backend** service, then redeploy the backend too.
+3. `render.yaml` hardcodes each service's expected URL into the other
+   (`CORS_ALLOWED_ORIGINS` on the backend, `VITE_API_BASE_URL` on the frontend) based on the
+   service names — Render uses the service name as the subdomain when it's free. **Check this
+   after the first deploy**: open each service in the Render dashboard and confirm its actual
+   URL matches what's in `render.yaml` (`https://resumeintel-backend.onrender.com` and
+   `https://resumeintel-frontend.onrender.com`). If either name was taken in your account,
+   Render will have appended a random suffix — update the corresponding env var on the *other*
+   service to the real URL and redeploy that one service. (This can't be fully automated: a
+   static site's JS runs in the visitor's browser, which needs the public URL, not Render's
+   private-network `fromService` linkage — which is also why it isn't used here.)
 4. Flyway migrates the schema automatically on the backend's first boot — nothing to run by
    hand against the Render Postgres instance.
 
