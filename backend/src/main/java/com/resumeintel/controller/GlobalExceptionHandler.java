@@ -27,6 +27,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("error", message));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> badInput(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+    }
+
+    @ExceptionHandler(java.io.IOException.class)
+    public ResponseEntity<Map<String, String>> unreadable(java.io.IOException e) {
+        return ResponseEntity.badRequest().body(Map.of("error", "Couldn't read that file — it may be corrupted or password-protected."));
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, String>> notConfigured(IllegalStateException e) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", e.getMessage()));

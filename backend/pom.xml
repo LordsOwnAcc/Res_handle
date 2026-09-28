@@ -56,6 +56,18 @@
       <scope>test</scope>
     </dependency>
 
+    <!-- Resume import: text extraction from PDF (PDFBox) and DOCX (POI). -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>3.0.8</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.poi</groupId>
+      <artifactId>poi-ooxml</artifactId>
+      <version>5.4.1</version>
+    </dependency>
+
     <!-- Google Drive: used as free file storage for original resume documents, since Render's
          free web services have no persistent disk. A service account uploads into a Drive
          folder the user owns and shares with it — see GoogleDriveConfig and the README. -->

@@ -4,6 +4,7 @@ import com.google.api.client.http.ByteArrayContent;
 import com.google.api.services.drive.Drive;
 import com.google.api.services.drive.model.File;
 import com.google.api.services.drive.model.Permission;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,8 +19,9 @@ public class DriveStorageService {
     @Value("${google.drive.folder-id:}")
     private String folderId;
 
-    public DriveStorageService(Drive drive) {
-        this.drive = drive;
+    // ObjectProvider: the Drive bean only exists when credentials are configured.
+    public DriveStorageService(ObjectProvider<Drive> driveProvider) {
+        this.drive = driveProvider.getIfAvailable();
     }
 
     public boolean isConfigured() {

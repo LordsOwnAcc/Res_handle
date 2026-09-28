@@ -41,6 +41,12 @@ export interface CreateResumeRequest {
   customNotes?: string; skills?: SkillInput[]; projects?: ProjectInput[]; experience?: ExperienceInput[];
 }
 
+export interface ParsedResumeDraft {
+  name: string; email: string; phone: string; github: string; linkedin: string; description: string;
+  targetRoles: string[]; educationLevel: EducationLevel; experienceMonths: number;
+  skills: SkillInput[]; projects: ProjectInput[]; warnings: string[];
+}
+
 export interface JdSummary {
   id: number; title: string; companyName: string | null; location: string;
   experienceRequiredYears: number | null; requiredSkills: string[]; aiSummary: string; createdAt: string;
@@ -82,6 +88,17 @@ export const api = {
     get: (id: number) => request<ResumeDetail>(`/api/resumes/${id}`),
     create: (body: CreateResumeRequest) => request<ResumeDetail>("/api/resumes", { method: "POST", body: JSON.stringify(body) }),
     update: (id: number, body: CreateResumeRequest) => request<ResumeDetail>(`/api/resumes/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+    // Reads a PDF/DOCX/TXT and returns an editable DRAFT — nothing is saved by this call.
+    parse: async (file: File): Promise<ParsedResumeDraft> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${BASE_URL}/api/resumes/parse`, { method: "POST", body: formData });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(body.error || `Couldn't read file: ${res.status}`);
+      }
+      return res.json();
+    },
     // Separate from `request()` — file uploads use multipart/form-data, not JSON, so this
     // must NOT set a Content-Type header (the browser sets the correct multipart boundary
     // itself when given a FormData body).

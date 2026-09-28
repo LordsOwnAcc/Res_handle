@@ -7,6 +7,7 @@ import com.google.api.services.drive.DriveScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,11 +32,11 @@ public class GoogleDriveConfig {
     @Value("${google.drive.credentials-base64:}")
     private String credentialsBase64;
 
+    // Only created when credentials are set. Returning null from a @Bean does NOT work —
+    // Spring ignores null beans and injection into DriveStorageService then fails at startup.
     @Bean
+    @ConditionalOnExpression("!'${google.drive.credentials-base64:}'.isBlank()")
     public Drive googleDriveClient() throws Exception {
-        if (credentialsBase64 == null || credentialsBase64.isBlank()) {
-            return null; // DriveStorageService checks for this and fails helpfully at call time
-        }
         byte[] decoded = Base64.getDecoder().decode(credentialsBase64.trim());
         GoogleCredentials credentials = GoogleCredentials
             .fromStream(new ByteArrayInputStream(decoded))
