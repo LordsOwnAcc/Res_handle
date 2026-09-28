@@ -20,13 +20,16 @@ public class ResumeService {
     private final ResumeSkillRepository skillRepo;
     private final ResumeProjectRepository projectRepo;
     private final ResumeExperienceRepository experienceRepo;
+    private final DocumentRepository documentRepo;
 
     public ResumeService(ResumeRepository resumeRepo, ResumeSkillRepository skillRepo,
-                          ResumeProjectRepository projectRepo, ResumeExperienceRepository experienceRepo) {
+                          ResumeProjectRepository projectRepo, ResumeExperienceRepository experienceRepo,
+                          DocumentRepository documentRepo) {
         this.resumeRepo = resumeRepo;
         this.skillRepo = skillRepo;
         this.projectRepo = projectRepo;
         this.experienceRepo = experienceRepo;
+        this.documentRepo = documentRepo;
     }
 
     @Transactional
@@ -122,10 +125,20 @@ public class ResumeService {
         List<ExperienceInput> experience = experienceRepo.findByResumeId(r.getId()).stream()
             .map(x -> new ExperienceInput(x.getCompany(), x.getRole(), x.getDurationMonths(), x.getResponsibilities(), splitCsv(x.getTechnologies()))).toList();
 
+        String documentUrl = null;
+        String documentFileName = null;
+        if (r.getDocumentId() != null) {
+            var doc = documentRepo.findById(r.getDocumentId()).orElse(null);
+            if (doc != null) {
+                documentUrl = doc.getStoragePath(); // Drive webViewLink
+                documentFileName = doc.getFileName();
+            }
+        }
+
         return new ResumeDetail(
             r.getId(), r.getName(), r.getVersionLabel(), r.getVersionGroupKey(), r.getDescription(),
             splitCsv(r.getTargetRoles()), splitCsv(r.getTargetIndustries()), r.getEducationLevel().name(), r.getCustomNotes(),
-            skills, projects, experience, r.getCreatedAt(), r.getLastModifiedAt()
+            skills, projects, experience, documentUrl, documentFileName, r.getCreatedAt(), r.getLastModifiedAt()
         );
     }
 

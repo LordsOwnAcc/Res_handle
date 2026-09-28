@@ -26,6 +26,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
 
+  servlet:
+    multipart:
+      max-file-size: 15MB
+      max-request-size: 15MB
+
 server:
   port: ${PORT:8080}
 
@@ -33,6 +38,15 @@ cors:
   # Comma-separated list of allowed frontend origins. Set to your deployed static site's
   # URL on Render (and http://localhost:5173 for local Vite dev).
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+google:
+  drive:
+    # Base64-encoded service-account JSON key. Empty by default — file upload is opt-in and
+    # the rest of the app works fine without it. See README "Google Drive setup".
+    credentials-base64: ${GOOGLE_DRIVE_CREDENTIALS_BASE64:}
+    # ID of the Drive folder (owned by you, shared with the service account as Editor) that
+    # uploaded resume files land in. Found in the folder's URL: drive.google.com/drive/folders/<THIS>
+    folder-id: ${GOOGLE_DRIVE_FOLDER_ID:}
 
 logging:
   level:

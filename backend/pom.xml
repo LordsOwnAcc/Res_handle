@@ -55,6 +55,25 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <!-- Google Drive: used as free file storage for original resume documents, since Render's
+         free web services have no persistent disk. A service account uploads into a Drive
+         folder the user owns and shares with it — see GoogleDriveConfig and the README. -->
+    <dependency>
+      <groupId>com.google.api-client</groupId>
+      <artifactId>google-api-client</artifactId>
+      <version>2.7.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.apis</groupId>
+      <artifactId>google-api-services-drive</artifactId>
+      <version>v3-rev20240509-2.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-oauth2-http</artifactId>
+      <version>1.35.0</version>
+    </dependency>
   </dependencies>
 
   <build>

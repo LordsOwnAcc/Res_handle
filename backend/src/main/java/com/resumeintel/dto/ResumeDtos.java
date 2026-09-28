@@ -35,6 +35,7 @@ public class ResumeDtos {
         String description, List<String> targetRoles, List<String> targetIndustries,
         String educationLevel, String customNotes,
         List<SkillInput> skills, List<ProjectInput> projects, List<ExperienceInput> experience,
+        String documentUrl, String documentFileName,
         Instant createdAt, Instant lastModifiedAt
     ) {}
 }

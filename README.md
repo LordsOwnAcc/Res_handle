@@ -36,6 +36,42 @@ npm run dev
 ```
 Opens on `http://localhost:5173` and talks to the backend via `VITE_API_BASE_URL`.
 
+## Google Drive setup (optional — enables file upload)
+
+Resume file upload (a resume's original PDF/DOCX) stores the file on **your own Google
+Drive**, not on the backend — Render's free web services have no persistent disk, and this
+avoids paying for object storage. It's opt-in: without this setup, everything else works
+(manual resume entry, matching, tracker) — you just won't have an "Upload File" option on a
+resume's detail page.
+
+1. **Create a Google Cloud project** (or reuse one) at [console.cloud.google.com](https://console.cloud.google.com).
+2. **Enable the Google Drive API**: APIs & Services → Library → search "Google Drive API" → Enable.
+3. **Create a service account**: APIs & Services → Credentials → Create Credentials → Service
+   Account. Give it any name (e.g. `resumeintel-uploader`). No roles needed at the project level.
+4. **Generate a key**: open the service account → Keys → Add Key → Create new key → JSON.
+   This downloads a `.json` file — treat it like a password, never commit it.
+5. **Create a folder in your own Google Drive** (e.g. "ResumeIntel Files") and **share it**
+   with the service account: right-click the folder → Share → paste the service account's
+   email (looks like `resumeintel-uploader@your-project.iam.gserviceaccount.com`, found in
+   the downloaded JSON as `client_email`) → give it **Editor** access.
+6. **Get the folder ID**: open the folder in Drive, copy the ID from the URL —
+   `drive.google.com/drive/folders/`**`THIS_PART`**.
+7. **Base64-encode the JSON key** (the backend reads it as one env var, not a file):
+   ```
+   base64 -i service-account-key.json | tr -d '\n'
+   ```
+   (On Windows: `certutil -encode service-account-key.json tmp.b64` then strip the header/footer lines.)
+8. Set two env vars on the **backend** service:
+   - `GOOGLE_DRIVE_CREDENTIALS_BASE64` — the base64 string from step 7
+   - `GOOGLE_DRIVE_FOLDER_ID` — the folder ID from step 6
+
+   Locally, put these in `backend/.env`. On Render, the Blueprint (`render.yaml`) already
+   declares both with `sync: false`, which makes Render prompt you for the values once when
+   you create the Blueprint instance — nothing to hardcode in the YAML itself.
+
+Uploaded files land in that Drive folder, viewable/shareable via a `webViewLink` that gets
+stored in Postgres (only the link — never the file bytes).
+
 ## Deploy to Render
 
 1. Push this repo to GitHub.
@@ -65,16 +101,18 @@ after a quiet period. Bump `plan:` to a paid tier if that matters for your use c
   API key needed) → every resume in Postgres gets scored by the same six-factor matching
   engine from the original spec → ranked results with expandable evidence render on the page.
 - **Resume management**: add resumes with skills/projects/experience through a form; they're
-  immediately part of the matching pool.
+  immediately part of the matching pool. Attach the original PDF/DOCX and it's stored on your
+  own Google Drive (see "Google Drive setup" below) — the link is saved, not the file.
 - **Application tracker**: Kanban-style board, status changes persist to Postgres immediately.
 - **Dashboard**: live stats and resume-usage breakdown computed from real data.
 
 ## What's still stubbed (same honesty as the mobile/desktop app)
 
-- **PDF/DOCX upload + parsing.** The form-based resume entry works fully; there's no file
-  upload yet. Real parsing needs a library decision (Apache PDFBox / Tika on the Java side)
-  and object storage for the original files (S3-compatible bucket — Render doesn't give you
-  persistent disk on free web services) — worth doing once you know where files should live.
+- **PDF/DOCX auto-parsing.** File upload itself is done (see "Google Drive setup" above) —
+  you can attach the original file to a resume and it's stored on your Drive. What's still
+  missing is automatically *reading* that file to pre-fill skills/projects/experience; you
+  still enter those by hand via the form. Real extraction needs a library decision (Apache
+  PDFBox / Tika on the Java side) — worth doing once the manual-entry flow feels limiting.
 - **Cloud AI (OpenAI/Gemini).** `AIProvider` is the seam; `HeuristicAIProvider` is the only
   implementation. Add a new `@Service` implementing the same interface, wire your API key via
   a Render environment variable (never commit it), and mark it `@Primary` to swap it in.

@@ -33,6 +33,7 @@ export interface ResumeSummary {
 export interface ResumeDetail extends ResumeSummary {
   targetIndustries: string[]; educationLevel: EducationLevel; customNotes: string;
   skills: SkillInput[]; projects: ProjectInput[]; experience: ExperienceInput[]; createdAt: string;
+  documentUrl: string | null; documentFileName: string | null;
 }
 export interface CreateResumeRequest {
   name: string; versionLabel?: string; versionGroupKey?: string; description?: string;
@@ -81,6 +82,19 @@ export const api = {
     get: (id: number) => request<ResumeDetail>(`/api/resumes/${id}`),
     create: (body: CreateResumeRequest) => request<ResumeDetail>("/api/resumes", { method: "POST", body: JSON.stringify(body) }),
     update: (id: number, body: CreateResumeRequest) => request<ResumeDetail>(`/api/resumes/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+    // Separate from `request()` — file uploads use multipart/form-data, not JSON, so this
+    // must NOT set a Content-Type header (the browser sets the correct multipart boundary
+    // itself when given a FormData body).
+    uploadDocument: async (resumeId: number, file: File): Promise<{ documentId: number; fileName: string; viewLink: string }> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`${BASE_URL}/api/documents/upload/${resumeId}`, { method: "POST", body: formData });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(body.error || `Upload failed: ${res.status}`);
+      }
+      return res.json();
+    },
   },
   jds: {
     list: () => request<JdSummary[]>("/api/jds"),

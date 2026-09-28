@@ -42,6 +42,13 @@ services:
         fromDatabase: { name: resumeintel-db, property: password }
       - key: CORS_ALLOWED_ORIGINS
         value: https://resumeintel-frontend.onrender.com
+      # Google Drive file storage — optional. Render prompts you for these at Blueprint
+      # creation time (sync: false means "ask, don't hardcode"). Leave blank to skip file
+      # upload entirely; everything else still works. See README "Google Drive setup".
+      - key: GOOGLE_DRIVE_CREDENTIALS_BASE64
+        sync: false
+      - key: GOOGLE_DRIVE_FOLDER_ID
+        sync: false
 
   # ---- Frontend: Vite/React static site ----
   # No `plan` field here — Render rejects the entire Blueprint sync if a static site has one,
